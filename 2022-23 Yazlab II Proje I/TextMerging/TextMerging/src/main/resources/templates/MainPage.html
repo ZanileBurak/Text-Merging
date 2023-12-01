@@ -1,0 +1,106 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sofia">
+    <style>
+        body {
+		background-color: #49798B;
+        padding: 0pt;
+        margin: 0pt;
+	}
+    #inner{
+        display: block;
+        text-align: center;
+        border: 1pt solid #2C2C2C;
+        border-radius: 10pt;
+        padding: 5%;
+        padding-top: 2%;
+        margin: 20%;
+        margin-top: 5%;
+        background-color: #7CA9BE;
+        width: 201pt;
+        
+    }
+    #outer{
+        display: flex;
+        padding: auto;
+    }
+    h1{
+        font-family: "Sofia", sans-serif ;
+        font: 700px;
+        border-bottom: 3pt solid #49798B;
+    }
+    .innerText{
+        text-align: center;
+        
+    }
+    .outerText{
+        font-family: "Sofia", sans-serif ;
+        text-align: center;
+        font-size: 100;
+
+        background-color: #7CA9BE;
+        margin: 0pt;
+        text-shadow: 2px 2px #EEEEEE;
+    }
+    
+    </style>
+</head>
+<body>
+    <title>Text Entry Screen</title>
+    <h1 class="outerText">Metin Birlestirici</h1>
+    <div id="outer">
+        
+        <div id="inner" style="margin-right: 5%;" >
+            <h1 style="text-shadow: 2px 2px #EEEEEE;">Metin Girisi</h1>
+            <form id="entry" action="entry" method="post" style="text-align: center;">
+            <label class="innerText">Text 1: </label><br>
+            <textarea name="text" class="innerText" cols="30" rows="3" required></textarea><br>
+            <label class="innerText" >Text 2: </label><br>
+            <textarea name="text" class="innerText" cols="30" rows="3" required></textarea><br>
+            <br id="here">
+            <button type="submit" id="sub" name="submit">Birleştir</button>
+            
+            </form>
+            <button onclick="calc()">Metin Ekle</button><br>
+        </div>
+        <div id="inner" style="margin-left: 5%;">
+            <h1 style="text-shadow: 2px 2px #EEEEEE;">Birlestirme Sonucu</h1>
+            <div>
+                <form action="done" method="post">
+                    <label th:text="${txt}" style="font-size: 20;" class="innerText"></label><br><br><br>
+                    <label th:text="${zaman}" style="font-size: 20;" class="innerText"></label><br><br>
+                    <button type="submit"  name="done"> Kaydet </button>
+                </form>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+    var count = 3;
+    var here = document.getElementById("here")
+        function calc(){
+            var addLabel = document.createElement("label");
+            addLabel.appendChild(document.createTextNode("Text "+count+": "));
+            addLabel.className = "innerText"
+            var addInput = document.createElement("textarea");
+            addInput.cols = 30;
+            addInput.rows = 3;
+            addInput.type = "text"
+            addInput.name = "text";
+            addInput.required = "required";
+            addInput.className = "innerText"
+            count++;
+            document.getElementById("entry").insertBefore(addLabel,here)
+            document.getElementById("entry").insertBefore(document.createElement("br"),here)
+            document.getElementById("entry").insertBefore(addInput,here)
+            document.getElementById("entry").insertBefore(document.createElement("br"),here)
+        }
+        
+    </script>
+    
+</body>
+</html>

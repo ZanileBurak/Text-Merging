@@ -1,0 +1,342 @@
+package com.yazlab.TextMerging.controller;
+
+
+import java.lang.ProcessBuilder.Redirect.Type;
+import java.util.Arrays;
+
+public class Compute {
+    public static String call(String str1,String str2) {
+        
+        String str3 = "";
+        Integer biggestCount = 0;
+        Integer lastI = 0;
+        Integer lastJ = 0;
+        Integer[][] kelimeMatrisi = new Integer[str1.length()][str2.length()];
+        for(int i = 0;i<kelimeMatrisi.length;i++){
+            for(int j = 0;j<kelimeMatrisi[i].length;j++){
+                kelimeMatrisi[i][j] = 0;
+            }
+        }
+
+    
+        for(int i = 0;i<str1.length();i++){
+            for(int j = 0;j<str2.length();j++){
+                if(str1.split("")[i].equals(str2.split("")[j])){
+                    if(i==0||j==0){
+                        kelimeMatrisi[i][j] = 1;
+                    }else{
+                        kelimeMatrisi[i][j] = kelimeMatrisi[i-1][j-1] +1;
+                    }
+                    if(kelimeMatrisi[i][j]>=biggestCount){
+                        biggestCount = kelimeMatrisi[i][j];
+                        lastI = i;
+                        lastJ = j;
+                    }
+    
+                }
+            }
+        }
+        for(int i = 0; i<lastI+1-biggestCount;i++){
+            str3 += str1.split("")[i];
+        }
+        for(int i = lastJ-biggestCount+1; i<lastJ+1;i++){
+            str3 += str2.split("")[i];
+        }
+        for(int i = lastJ+1; i<str2.length();i++){
+            str3 += str2.split("")[i];
+        }
+        return str3;
+        
+    }
+    
+
+
+
+
+    
+
+        
+}
+--------------------------------------------------------------------------------------------------------------
+package com.yazlab.TextMerging.controller;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestParam;
+import com.yazlab.TextMerging.controller.Compute;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoClientURI;
+import com.mongodb.ServerApi;
+import com.mongodb.ServerApiVersion;
+
+import org.bson.Document;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.util.Arrays;
+
+import ch.qos.logback.core.joran.conditional.ElseAction;
+
+@Controller
+public class IndexController {
+
+    Long totalTime;
+    String[] text2;
+    String str;
+
+    @GetMapping("/")
+    public String Main() {
+        return "MainPage";
+    }
+
+    @RequestMapping(value = "/entry", params = "submit")
+    public String TextEntry(@RequestParam("text") String[] text, Model model) {
+        str = text[0];
+        text2 = text;
+        long startTime = System.currentTimeMillis();
+        for (int i = 0; i < text.length - 1; i++) {
+            Compute pro = new Compute();
+            str = pro.call(str, text[i + 1]);
+            model.addAttribute("txt", str);
+        }
+        long endTime = System.currentTimeMillis();
+
+        totalTime = endTime - startTime;
+        String zaman = ("Gecen zaman: " + totalTime + "ms");
+        model.addAttribute("zaman", zaman);
+        return "MainPage";
+    }
+
+    @RequestMapping(value = "/entry", params = "done")
+    public String TextSave(@RequestParam("text") String[] text, Model model) {
+        return "DonePage";
+    }
+
+    @PostMapping("/done")
+    public String Done() {
+        ConnectionString connectionString = new ConnectionString(
+                "mongodb+srv://admin:1234@cluster0.psonqsi.mongodb.net/?retryWrites=true&w=majority");
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .applyConnectionString(connectionString)
+                .serverApi(ServerApi.builder()
+                        .version(ServerApiVersion.V1)
+                        .build())
+                .build();
+        MongoClient mongoClient = MongoClients.create(settings);
+        MongoDatabase myDatabase = mongoClient.getDatabase("myDatabase");
+        MongoCollection<Document> myCollection = myDatabase.getCollection("myCollection");
+        String JS ="{ \"metinler\":\""+Arrays.toString(text2)+"\", \"cikti\":\""+str+"\",\"sure\":\""+totalTime+" ms\"}";
+        myCollection.insertOne(Document.parse(JS));
+        return "DonePage";
+    }
+}
+------------------------------------------------------------------------------------------------------------------------------------
+package com.yazlab.TextMerging;
+
+import java.util.List;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+
+@SpringBootApplication
+@EnableMongoRepositories
+public class TextMergingApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(TextMergingApplication.class, args);
+	}
+
+}
+-------------------------------------------------------------------------------------------------------------------------------------
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sofia">
+    <style>
+        body {
+		background-color: #49798B;
+        padding: 0pt;
+        margin: 0pt;
+	}
+    #inner{
+        display: block;
+        text-align: center;
+
+        border: 1pt solid #2C2C2C;
+        border-radius: 10pt;
+        padding: 5%;
+        padding-top: 2%;
+        margin: 20%;
+        margin-top: 5%;
+        background-color: #7CA9BE;
+        width: 201pt;
+        
+    }
+    #outer{
+        display: flex;
+        padding: auto;
+        align-items: center;
+        justify-content: center;
+        margin: 20px;
+        padding-top: 20px;
+    }
+    h1{
+        font-family: "Sofia", sans-serif ;
+        font: 700px;
+        border-bottom: 3pt solid #49798B;
+    }
+    .innerText{
+        font-family: "Sofia", sans-serif ;
+        text-align: center;
+        
+    }
+    .outerText{
+        font-family: "Sofia", sans-serif ;
+        text-align: center;
+        font-size: 100;
+
+        background-color: #7CA9BE;
+        margin: 0pt;
+        text-shadow: 2px 2px #EEEEEE;
+    }
+    
+    </style>
+</head>
+<body>
+    <title>Text Entry Screen</title>
+    <h1 class="outerText">Metin Birlesirici</h1>
+    <div id="outer">
+        <h1 class="innerText" style="text-shadow:2px 2px #EEEEEE; text-align: center;">Basariyla Kaydedildi.</h1>
+    </div>
+    <div style="text-align: center;">
+        <button onclick="window.location.href='/'" >Yeni Birleştirme</button>
+    </div>
+    <script>
+    </script>
+    
+</body>
+</html>
+----------------------------------------------------------------------------------------------------------------------------------------
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sofia">
+    <style>
+        body {
+		background-color: #49798B;
+        padding: 0pt;
+        margin: 0pt;
+	}
+    #inner{
+        display: block;
+        text-align: center;
+        border: 1pt solid #2C2C2C;
+        border-radius: 10pt;
+        padding: 5%;
+        padding-top: 2%;
+        margin: 20%;
+        margin-top: 5%;
+        background-color: #7CA9BE;
+        width: 201pt;
+        
+    }
+    #outer{
+        display: flex;
+        padding: auto;
+    }
+    h1{
+        font-family: "Sofia", sans-serif ;
+        font: 700px;
+        border-bottom: 3pt solid #49798B;
+    }
+    .innerText{
+        text-align: center;
+        
+    }
+    .outerText{
+        font-family: "Sofia", sans-serif ;
+        text-align: center;
+        font-size: 100;
+
+        background-color: #7CA9BE;
+        margin: 0pt;
+        text-shadow: 2px 2px #EEEEEE;
+    }
+    
+    </style>
+</head>
+<body>
+    <title>Text Entry Screen</title>
+    <h1 class="outerText">Metin Birlestirici</h1>
+    <div id="outer">
+        
+        <div id="inner" style="margin-right: 5%;" >
+            <h1 style="text-shadow: 2px 2px #EEEEEE;">Metin Girisi</h1>
+            <form id="entry" action="entry" method="post" style="text-align: center;">
+            <label class="innerText">Text 1: </label><br>
+            <textarea name="text" class="innerText" cols="30" rows="3" required></textarea><br>
+            <label class="innerText" >Text 2: </label><br>
+            <textarea name="text" class="innerText" cols="30" rows="3" required></textarea><br>
+            <br id="here">
+            <button type="submit" id="sub" name="submit">Birleştir</button>
+            
+            </form>
+            <button onclick="calc()">Metin Ekle</button><br>
+        </div>
+        <div id="inner" style="margin-left: 5%;">
+            <h1 style="text-shadow: 2px 2px #EEEEEE;">Birlestirme Sonucu</h1>
+            <div>
+                <form action="done" method="post">
+                    <label th:text="${txt}" style="font-size: 20;" class="innerText"></label><br><br><br>
+                    <label th:text="${zaman}" style="font-size: 20;" class="innerText"></label><br><br>
+                    <button type="submit"  name="done"> Kaydet </button>
+                </form>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+    var count = 3;
+    var here = document.getElementById("here")
+        function calc(){
+            var addLabel = document.createElement("label");
+            addLabel.appendChild(document.createTextNode("Text "+count+": "));
+            addLabel.className = "innerText"
+            var addInput = document.createElement("textarea");
+            addInput.cols = 30;
+            addInput.rows = 3;
+            addInput.type = "text"
+            addInput.name = "text";
+            addInput.required = "required";
+            addInput.className = "innerText"
+            count++;
+            document.getElementById("entry").insertBefore(addLabel,here)
+            document.getElementById("entry").insertBefore(document.createElement("br"),here)
+            document.getElementById("entry").insertBefore(addInput,here)
+            document.getElementById("entry").insertBefore(document.createElement("br"),here)
+        }
+        
+    </script>
+    
+</body>
+</html>
+
